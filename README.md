@@ -16,6 +16,8 @@ Simplio3D Integration allows you to embed your Simplio3D configurator inside Wor
 
 This plugin is ideal if you sell configurable or customizable products (like furniture, jewelry, or manufacturing components) and need to pass dynamic configuration data from Simplio3D into WooCommerce.
 
+**More Details:** https://docs.simplio3d.com/integrations/woocommerce/add-to-basket
+
 ---
 
 ## Installation
