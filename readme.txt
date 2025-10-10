@@ -5,7 +5,7 @@ Requires at least: 5.0
 Tested up to: 6.8
 Stable tag: 1.0.0
 License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+License URI: https://github.com/digitalartflow/simplio3d-woo-plugin/blob/main/LICENSE
 
 == Description ==
 Simplio3D Integration allows you to embed your Simplio3D configurator inside WordPress/WooCommerce pages and link the customized product directly into the WooCommerce cart.
