@@ -32,3 +32,31 @@ This plugin is ideal if you sell configurable or customizable products (like fur
    product_id="280"
    height="850px"
    width="100%"]
+
+4. Replace UNIQUE_SHARE_URL with the share URL generated from your Simplio3D configurator.
+5. Replace product_id with the WooCommerce product ID where the order should be linked.
+
+## Usage
+
+You can mix regular WooCommerce products and Simplio3D-configured products in the same store.
+
+The shortcode embeds your configurator in an iframe and handles "Add to Cart" communication automatically.
+
+## Frequently Asked Questions
+
+**How do I get the share URL?**
+Log in to your Simplio3D admin and generate a "Share URL" for the configurator.
+
+**Where do I find the WooCommerce product_id?**
+Go to WooCommerce → Products, hover over a product, and you’ll see the ID.
+
+**Can I use both WooCommerce native products and Simplio3D?**
+Yes. Normal WooCommerce products work as usual, and Simplio3D products are added using the shortcode.
+
+**Does this plugin handle pricing?**
+Yes. The configurator can send the final calculated price into WooCommerce’s cart. You can also rely on WooCommerce product price if you prefer.
+
+## Changelog
+1.0.0
+
+Initial release with shortcode support and WooCommerce cart integration.
