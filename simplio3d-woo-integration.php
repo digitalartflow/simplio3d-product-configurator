@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Simplio3D Integration
-Plugin URI: https://simplio3d.com/
+Plugin URI: https://docs.simplio3d.com/integrations/woocommerce/add-to-basket
 Description: Receives configurator data from a Simplio3D iframe using postMessage and adds products to the WooCommerce cart with description, thumbnail, config ID, and custom pricing. Provides a shortcode for embedding the iframe.
 Version: 1.0.0
 Author: Simplio3D
-Author URI: https://simplio3d.com/
+Author URI: https://docs.simplio3d.com/integrations/woocommerce/add-to-basket
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 5.0
