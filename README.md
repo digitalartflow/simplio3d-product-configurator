@@ -3,7 +3,7 @@
 **Contributors:** Simplio3D  
 **Tags:** woocommerce, 3d configurator, product customization, iframe  
 **Requires at least:** 5.0  
-**Tested up to:** 6.8 9
+**Tested up to:** 6.9
 **Stable tag:** 1.0.0  
 **License:** GPLv2 or later  
 **License URI:** https://github.com/digitalartflow/simplio3d-woo-plugin/blob/main/LICENSE
