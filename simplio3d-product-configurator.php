@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: Simplio3D Integration
-Plugin URI: https://docs.simplio3d.com/integrations/woocommerce/add-to-basket
+Plugin Name: Simplio3D Product Configurator
+Plugin URI: https://github.com/digitalartflow/simplio3d-product-configurator
 Description: Receives configurator data from a Simplio3D iframe using postMessage and adds products to the WooCommerce cart with description, thumbnail, config ID, and custom pricing. Provides a shortcode for embedding the iframe.
 Version: 1.0.0
 Author: Simplio3D
@@ -9,13 +9,15 @@ Author URI: https://docs.simplio3d.com/integrations/woocommerce/add-to-basket
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 5.0
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
-Text Domain: simplio3d-integration
+Text Domain: simplio3d-product-configurator
 */
 
 
+
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 
 final class Simplio3D_Woo_Integration_Enhanced {
     const VERSION       = '0.2.0';
@@ -27,8 +29,8 @@ final class Simplio3D_Woo_Integration_Enhanced {
         add_action( 'wp_ajax_simplio3d_add_to_cart', [ $this, 'ajax_add_to_cart' ] );
         add_action( 'wp_ajax_nopriv_simplio3d_add_to_cart', [ $this, 'ajax_add_to_cart' ] );
         // add_action('woocommerce_after_cart_item_name', [$this, 'print_thumb_after_name'], 5, 2);
-        add_action('wp_head', function(){
-            echo '<style>.wc-item-meta img{display:block;margin-top:6px;}</style>';
+        add_action( 'wp_head', function () {
+            echo '<style>.wc-item-meta img{display:block;margin-top:6px;}</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         });
 
         add_filter( 'woocommerce_get_item_data', [ $this, 'display_item_meta' ], 10, 2 );
@@ -46,7 +48,6 @@ final class Simplio3D_Woo_Integration_Enhanced {
         add_shortcode( 'simplio3d_configurator', [ $this, 'shortcode_configurator' ] );
 
         add_filter( 'woocommerce_order_item_name', function( $name, $item ) {
-            error_log('Blocks cart item has thumbnail: ' . $item);
             $thumb = $item->get_meta( '_simplio3d_thumbnail', true );
             if ( ! $thumb ) return $name;
             return '<img src="'.esc_url($thumb).'" alt="" style="max-width:60px;height:auto;margin-right:8px;vertical-align:middle;" />' . $name;
@@ -56,10 +57,6 @@ final class Simplio3D_Woo_Integration_Enhanced {
             // Only affect items coming from Simplio3D
             if ( empty( $cart_item['simplio3d_thumbnail'] ) ) {
                 return $response; // regular Woo products stay as-is
-            }
-
-            if ( ! empty( $cart_item['simplio3d_thumbnail'] ) ) {
-                error_log('Blocks cart item has thumbnail: ' . $cart_item['simplio3d_thumbnail']);
             }
 
             $url = $cart_item['simplio3d_thumbnail'];
@@ -116,24 +113,25 @@ final class Simplio3D_Woo_Integration_Enhanced {
         ], $atts, 'simplio3d_configurator' );
 
         if ( empty( $atts['url'] ) ) {
-            return '<div style="color:#b00">Simplio3D: Please provide the iframe URL via url="...".</div>';
+            return '<div style="color:#b00">' . esc_html__( 'Simplio3D: Please provide the iframe URL via url="...".', 'simplio3d-product-configurator' ) . '</div>';
         }
 
-        $url = esc_url( $atts['url'] );
-        $pid = esc_attr( $atts['product_id'] );
-        $h   = esc_attr( $atts['height'] );
-        $w   = esc_attr( $atts['width'] );
+        $url = (string) $atts['url'];
+        $pid = (string) $atts['product_id'];
+        $h   = (string) $atts['height'];
+        $w   = (string) $atts['width'];
 
-        ob_start();
-        ?>
-        <div class="simplio3d-wrapper" data-product-id="<?php echo $pid; ?>">
-            <iframe class="simplio3d-iframe" src="<?php echo $url; ?>"
-                    style="width:<?php echo $w; ?>;height:<?php echo $h; ?>;border:0;"
+        ob_start(); ?>
+        <div class="simplio3d-wrapper" data-product-id="<?php echo esc_attr( $pid ); ?>">
+            <iframe class="simplio3d-iframe"
+                    src="<?php echo esc_url( $url ); ?>"
+                    style="width:<?php echo esc_attr( $w ); ?>;height:<?php echo esc_attr( $h ); ?>;border:0;"
                     allow="clipboard-write; fullscreen"></iframe>
         </div>
         <?php
         return ob_get_clean();
     }
+
 
     public function ajax_add_to_cart() {
         if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
@@ -142,95 +140,61 @@ final class Simplio3D_Woo_Integration_Enhanced {
 
         check_ajax_referer( self::NONCE_ACTION, self::NONCE_NAME );
 
-        $product_id  = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
-        $quantity    = isset($_POST['quantity']) ? max(1, absint($_POST['quantity'])) : 1;
-        $description = isset($_POST['description']) ? wp_kses_post( wp_unslash($_POST['description']) ) : '';
-        $config_id   = isset($_POST['config_id']) ? sanitize_text_field( wp_unslash($_POST['config_id']) ) : '';
-        $price_raw   = isset($_POST['price']) ? wc_format_decimal( wp_unslash($_POST['price']) ) : '';
-        $orderurl = isset($_POST['orderurl']) ? wp_kses_post( wp_unslash($_POST['orderurl']) ) : '';
+        // integers
+        $product_id  = filter_input( INPUT_POST, 'product_id', FILTER_VALIDATE_INT );
+        $quantity    = filter_input( INPUT_POST, 'quantity', FILTER_VALIDATE_INT );
+        $product_id  = $product_id ? (int) $product_id : 0;
+        $quantity    = $quantity && $quantity > 0 ? (int) $quantity : 1;
 
-        // Thumbnail can be a URL or a data URL. If data URL, store to uploads and use URL.
+        // text
+        $description = filter_input( INPUT_POST, 'description', FILTER_UNSAFE_RAW );
+        $description = $description ? wp_kses_post( wp_unslash( $description ) ) : '';
+
+        $config_id   = filter_input( INPUT_POST, 'config_id', FILTER_UNSAFE_RAW );
+        $config_id   = $config_id ? sanitize_text_field( wp_unslash( $config_id ) ) : '';
+
+        $orderurl    = filter_input( INPUT_POST, 'orderurl', FILTER_UNSAFE_RAW );
+        $orderurl    = $orderurl ? wp_kses_post( wp_unslash( $orderurl ) ) : '';
+
+        // numeric (allow decimals)
+        $price_raw   = filter_input( INPUT_POST, 'price', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION );
+        $price_raw   = ( $price_raw !== null && $price_raw !== false && $price_raw !== '' ) ? wc_format_decimal( $price_raw ) : '';
+
+        // thumbnail (url or data:)
+        $thumbnail_raw = filter_input( INPUT_POST, 'thumbnail', FILTER_UNSAFE_RAW );
         $thumbnail = '';
-        if ( isset($_POST['thumbnail']) ) {
-            $raw = wp_unslash($_POST['thumbnail']);
-            if ( strpos($raw, 'data:image/') === 0 ) {
-                $thumbnail = $this->save_data_url_image( $raw );
+        if ( is_string( $thumbnail_raw ) && $thumbnail_raw !== '' ) {
+            if ( strpos( $thumbnail_raw, 'data:image/' ) === 0 ) {
+                $thumbnail = $this->save_data_url_image( $thumbnail_raw );
             } else {
-                $thumbnail = esc_url_raw( $raw );
+                $thumbnail = esc_url_raw( $thumbnail_raw );
             }
         }
 
-        $print_maps = [];
-
-        if (isset($_POST['printmaps'])) {
-            $raw = wp_unslash($_POST['printmaps']);
-
-            if (is_array($raw)) {
-                // Already an array (e.g., form fields printmaps[]=...&printmaps[]=...)
-                $arr = $raw;
-
+        // helper to normalize array-ish inputs (JSON array or CSV string)
+        $normalize_url_list = static function( $input ) {
+            $arr = [];
+            if ( is_array( $input ) ) {
+                $arr = $input;
             } else {
-                // It's a string; normalize
-                $str = trim((string) $raw);
-
-                if ($str === '' || $str === '[]') {
-                    $arr = [];
-                } else {
-                    // Try JSON first
-                    $decoded = json_decode($str, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $str = trim( (string) $input );
+                if ( $str !== '' && $str !== '[]' ) {
+                    $decoded = json_decode( $str, true );
+                    if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded ) ) {
                         $arr = $decoded;
                     } else {
-                        // Fallback: comma-separated
-                        $arr = array_map('trim', explode(',', $str));
+                        $arr = array_map( 'trim', explode( ',', $str ) );
                     }
                 }
             }
+            return array_values( array_filter( array_map( 'esc_url_raw', (array) $arr ) ) );
+        };
 
-            // Sanitize URLs & drop empties
-            $print_maps = array_values(
-                array_filter(
-                    array_map('esc_url_raw', (array) $arr)
-                )
-            );
-        }
+        $printmaps_raw = filter_input( INPUT_POST, 'printmaps', FILTER_UNSAFE_RAW );
+        $print_maps    = $normalize_url_list( $printmaps_raw );
 
-        $snap_shots = [];
-
-        if (isset($_POST['snapshots'])) {
-            $raw = wp_unslash($_POST['snapshots']);
-
-            if (is_array($raw)) {
-                // Already an array (e.g., form fields snapshots[]=...&snapshots[]=...)
-                $arr = $raw;
-
-            } else {
-                // It's a string; normalize
-                $str = trim((string) $raw);
-
-                if ($str === '' || $str === '[]') {
-                    $arr = [];
-                } else {
-                    // Try JSON first
-                    $decoded = json_decode($str, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                        $arr = $decoded;
-                    } else {
-                        // Fallback: comma-separated
-                        $arr = array_map('trim', explode(',', $str));
-                    }
-                }
-            }
-
-            // Sanitize URLs & drop empties
-            $snap_shots = array_values(
-                array_filter(
-                    array_map('esc_url_raw', (array) $arr)
-                )
-            );
-        }
-
-
+        $snapshots_raw = filter_input( INPUT_POST, 'snapshots', FILTER_UNSAFE_RAW );
+        $snap_shots    = $normalize_url_list( $snapshots_raw );
 
         if ( ! $product_id ) {
             wp_send_json_error( [ 'message' => 'Missing product_id' ], 422 );
@@ -270,14 +234,25 @@ final class Simplio3D_Woo_Integration_Enhanced {
         if ( empty( $cart_item['simplio3d_thumbnail'] ) ) {
             return;
         }
-        $src = $cart_item['simplio3d_thumbnail'];
+
+        $src = (string) $cart_item['simplio3d_thumbnail'];
 
         // Render a small snapshot under the product title.
-        if ( strpos($src, 'data:image/') === 0 ) {
-            echo '<div class="simplio3d-thumb" style="margin-top:6px;"><img src="' . $src . '" alt="" style="max-width:80px;height:auto;" /></div>';
+        echo '<div class="simplio3d-thumb" style="margin-top:6px;">';
+
+        if ( strpos( $src, 'data:image/' ) === 0 ) {
+            printf(
+                '<img src="%s" alt="" style="max-width:80px;height:auto;" />',
+                esc_attr( $src )
+            );
         } else {
-            echo '<div class="simplio3d-thumb" style="margin-top:6px;"><img src="' . esc_url($src) . '" alt="" style="max-width:80px;height:auto;" /></div>';
+            printf(
+                '<img src="%s" alt="" style="max-width:80px;height:auto;" />',
+                esc_url( $src )
+            );
         }
+
+        echo '</div>';
     }
 
 
@@ -309,7 +284,7 @@ final class Simplio3D_Woo_Integration_Enhanced {
 
             // Some themes use 'value', others use 'display'. We provide both.
             $item_data[] = [
-                'name'    => __( 'Customization', 'simplio3d' ),
+                'name'    => __( 'Customization', 'simplio3d-product-configurator' ),
                 'value'   => $plain,         // Blocks cart will show this (no HTML)
                 'display' => $html,          // Classic cart/checkout will show this
             ];
@@ -348,19 +323,19 @@ final class Simplio3D_Woo_Integration_Enhanced {
         // }
         // return $thumbnail;
 
-        if ( empty( $cart_item['simplio3d_thumbnail'] ) ) {
-            return $thumbnail;
-        }
+        if ( empty( $cart_item['simplio3d_thumbnail'] ) ) { return $thumbnail; }
+        $src = (string) $cart_item['simplio3d_thumbnail'];
 
-        $src = $cart_item['simplio3d_thumbnail'];
-
-        // If it's a data URL, echo it directly (esc_url would strip data:)
         if ( strpos( $src, 'data:image/' ) === 0 ) {
-            return '<img src="' . $src . '" alt="" style="max-width:60px;height:auto;" />';
+            return sprintf(
+                '<img src="%s" alt="" style="max-width:60px;height:auto;" />',
+                esc_attr( $src )
+            );
         }
-
-        // Normal URL path
-        return '<img src="' . esc_url( $src ) . '" alt="" style="max-width:60px;height:auto;" />';
+        return sprintf(
+            '<img src="%s" alt="" style="max-width:60px;height:auto;" />',
+            esc_url( $src )
+        );
     }
 
     public function persist_order_item_meta( $item, $cart_item_key, $values ) {
@@ -446,11 +421,11 @@ final class Simplio3D_Woo_Integration_Enhanced {
     }
 
     public function prepend_thumb_to_name( $name, $cart_item, $cart_item_key ) {
-        if ( empty($cart_item['simplio3d_thumbnail']) ) return $name;
-        $src = $cart_item['simplio3d_thumbnail'];
-        $img = (strpos($src,'data:image/')===0)
-            ? '<img src="'.$src.'" alt="" style="max-width:60px;height:auto;margin-right:8px;vertical-align:middle;" />'
-            : '<img src="'.esc_url($src).'" alt="" style="max-width:60px;height:auto;margin-right:8px;vertical-align:middle;" />';
+        if ( empty( $cart_item['simplio3d_thumbnail'] ) ) { return $name; }
+        $src = (string) $cart_item['simplio3d_thumbnail'];
+        $img = ( strpos( $src, 'data:image/' ) === 0 )
+            ? '<img src="' . esc_attr( $src ) . '" alt="" style="max-width:60px;height:auto;margin-right:8px;vertical-align:middle;" />'
+            : '<img src="' . esc_url( $src ) . '" alt="" style="max-width:60px;height:auto;margin-right:8px;vertical-align:middle;" />';
         return $img . $name;
     }
 }

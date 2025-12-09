@@ -1,19 +1,20 @@
-=== Simplio3D Integration ===
-Contributors: Simplio3D
+=== Simplio3D Product Configurator ===
+Contributors: digitalartflow
 Tags: woocommerce, 3d configurator, product customization, iframe
 Requires at least: 5.0
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 1.0.0
 License: GPLv2 or later
-License URI: https://github.com/digitalartflow/simplio3d-woo-plugin/blob/main/LICENSE
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+Simplio3D Product Configurator embeds your Simplio3D configurator and sends configured products to the WooCommerce cart.
 
 == Description ==
-Simplio3D Integration allows you to embed your Simplio3D configurator inside WordPress/WooCommerce pages and link the customized product directly into the WooCommerce cart.
 
 This plugin is ideal if you sell configurable or customizable products (like furniture, jewelry, or manufacturing components) and need to pass dynamic configuration data from Simplio3D into WooCommerce.
 
 == Installation ==
-1. Upload the plugin folder to `/wp-content/plugins/simplio3d-woo-integration/` or install it via WordPress Admin > Plugins > Add New > Upload Plugin.
+1. Upload the plugin folder to `/wp-content/plugins/simplio3d-product-configurator/` or install it via WordPress Admin > Plugins > Add New > Upload Plugin.
 2. Activate the plugin from the 'Plugins' screen in WordPress.
 3. Add the shortcode to any page or product:
 

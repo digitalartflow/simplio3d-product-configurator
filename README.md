@@ -3,7 +3,7 @@
 **Contributors:** Simplio3D  
 **Tags:** woocommerce, 3d configurator, product customization, iframe  
 **Requires at least:** 5.0  
-**Tested up to:** 6.8  
+**Tested up to:** 6.8 9
 **Stable tag:** 1.0.0  
 **License:** GPLv2 or later  
 **License URI:** https://github.com/digitalartflow/simplio3d-woo-plugin/blob/main/LICENSE
@@ -22,7 +22,7 @@ This plugin is ideal if you sell configurable or customizable products (like fur
 
 ## Installation
 
-1. Upload the plugin folder to `/wp-content/plugins/simplio3d-integration/` or install it via **WordPress Admin → Plugins → Add New → Upload Plugin**.
+1. Upload the plugin folder to `/wp-content/plugins/simplio3d-product-configurator/` or install it via **WordPress Admin → Plugins → Add New → Upload Plugin**.
 2. Activate the plugin from the **Plugins** screen in WordPress.
 3. Add the shortcode to any page or product:
 
