@@ -1,6 +1,7 @@
 # Simplio3D Integration
 
 **Contributors:** Simplio3D 
+
 **Website:** https://www.simplio3d.com/
 
 **Tags:** woocommerce, 3d configurator, product customization, iframe  
